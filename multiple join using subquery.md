@@ -7,3 +7,38 @@ AND b.category_nm4= c.category_nm4
 AND b.maker_nm = d.maker_nm
 AND c.main_yn = 'Y' 
 ```
+```sql
+SELECT x1.sales_mm, x1.mng_area1, x1.barcode_no, x3.goods_nm, x3.maker_nm, all_store_cnt, store_cnt, store_cnt/all_store_cnt, mm_amt, mm_cnt, mm_amt/mm_cnt
+FROM  (SELECT a.sales_mm
+               , c.mng_area1
+               , a.barcode_no
+               , COUNT(DISTINCT c.drim_store_id) store_cnt
+               , SUM(a.sales_amt) mm_amt
+               , SUM(a.sales_cnt) mm_cnt
+          FROM  dw_pos_mm_sales a, tb_pos_barcode_mst b, dw_store_mst c
+          WHERE a.sales_mm = 202103
+          AND   a.barcode_no = b.barcode_no
+          AND   b.category_nm4 in('두유')
+          AND   b.valid_yn = 'Y'
+          AND   b.maker_nm > ''
+          AND   a.drim_store_id = c.drim_store_id
+          AND   c.store_type in('슈퍼마켓','편의점')
+          AND   c.provide_yn = 'Y'
+          AND   c.mng_area1 > ''
+          AND   c.sales_grd > ''
+          GROUP BY a.sales_mm
+               , c.mng_area1
+               , a.barcode_no
+   ) x1
+  , (SELECT a.mng_area1, COUNT(DISTINCT a.drim_store_id) all_store_cnt
+        FROM   dw_store_mst a 
+        WHERE  store_type in('슈퍼마켓','편의점')
+        AND    provide_yn = 'Y'
+        AND    mng_area1 > ''
+        AND    sales_grd > ''
+        GROUP BY a.mng_area1
+	) x2
+  , tb_pos_barcode_mst x3
+  WHERE x1.mng_area1 = x2.mng_area1
+  AND   x1.barcode_no = x3.barcode_no;
+  ```
