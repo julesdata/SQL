@@ -41,10 +41,10 @@ BEGIN
 			FROM temp_pos_dd_sales a, tb_pos_barcode_mst d
 					, (SELECT * from dw_store_mst 
 					   WHERE drim_store_id IN(SELECT DISTINCT drim_store_id from dw_store_mm_sum  
-						                       WHERE sales_mm BETWEEN 202102 AND 202103
-													  AND day_cnt > 20 
-													  GROUP BY drim_store_id HAVING COUNT(DISTINCT sales_mm)=2)
-						) e #연속거래매장
+						               		WHERE sales_mm BETWEEN 202102 AND 202103
+								        AND day_cnt > 20 
+									GROUP BY drim_store_id HAVING COUNT(DISTINCT sales_mm)=2)
+					) e #연속거래매장
 			WHERE 1=1
 			AND a.sales_date BETWEEN vg_from AND vg_to
 			AND a.barcode_no = d.barcode_no
@@ -69,10 +69,10 @@ BEGIN
 			FROM temp_pos_dd_sales a, tb_pos_barcode_mst d
 					, (SELECT * from dw_store_mst 
 					   WHERE drim_store_id IN(SELECT DISTINCT drim_store_id from dw_store_mm_sum  
-						                       WHERE sales_mm BETWEEN 202102 AND 202103
-													  AND day_cnt > 20 
-													  GROUP BY drim_store_id HAVING COUNT(DISTINCT sales_mm)=2)
-						) e #연속거래매장
+						                        WHERE sales_mm BETWEEN 202102 AND 202103
+									AND day_cnt > 20 
+									GROUP BY drim_store_id HAVING COUNT(DISTINCT sales_mm)=2)
+					) e #연속거래매장
 			WHERE 1=1
 			AND a.sales_date BETWEEN vg_from AND vg_to
 			AND a.barcode_no = d.barcode_no
