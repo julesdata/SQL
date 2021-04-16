@@ -49,7 +49,7 @@ BEGIN
 			AND a.sales_date BETWEEN vg_from AND vg_to
 			AND a.barcode_no = d.barcode_no
 			# 한맥 바코드
-			AND d. barcode_no IN('8801021105598','8801021105604','8801021105833','8801021105833')
+			AND d. barcode_no IN('8801021105598','8801021105604','8801021105833','8801021105840')
 			AND d.valid_yn = 'Y'
 			AND d.maker_nm > ''
 			AND a.drim_store_id = e.drim_store_id
