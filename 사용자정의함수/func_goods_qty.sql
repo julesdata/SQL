@@ -1,7 +1,5 @@
 CREATE DEFINER=`drimmart`@`%` FUNCTION `FUNC_GOODS_QTY_temp`(
 	`I_GOODS_NM` VARCHAR(500),
-	`I_BARCODE` VARCHAR(50),
-	`I_GOODS_NM` VARCHAR(500),
 	`I_BARCODE` VARCHAR(50)
 )
 RETURNS varchar(2000) CHARSET utf8
@@ -61,12 +59,17 @@ BEGIN
   
   -- 용량단위 통일 (1.리터 -> L, 2. MI,MML,㎖ -> ML, 3.㎏ -> KG 4. K-> KG )
   SET vg_goods_nm = CASE WHEN vg_goods_nm LIKE '%리터%' THEN REPLACE(vg_goods_nm, '리터', 'L') 
-  								 WHEN vg_goods_nm REGEXP CONCAT(rg_num,'(MI|MML|㎖)') THEN REGEXP_REPLACE(vg_goods_nm,'MI|MML|㎖','ml')
+  								 WHEN vg_goods_nm REGEXP CONCAT(rg_num,'(MI|MML|㎖)') THEN REGEXP_REPLACE(regexp_substr(vg_goods_nm,CONCAT(rg_num,'(MI|MML|㎖)')),'MI|MML|㎖','ml')
   								 WHEN vg_goods_nm REGEXP '㎏' THEN REPLACE(vg_goods_nm, '㎏','KG')
-  								 WHEN vg_goods_nm REGEXP CONCAT(rg_num,'(K\\W|K$)') THEN REGEXP_REPLACE(vg_goods_nm, 'K', 'KG')
+  								 WHEN vg_goods_nm REGEXP CONCAT(rg_num,'(K[^a-zA-Z]|K$)') THEN REGEXP_REPLACE(regexp_substr(vg_goods_nm,CONCAT(rg_num,'(K[^a-zA-Z]|K$)')),'K','KG')
   								 ELSE vg_goods_nm
   								 END;
-  
+    ## 숫자에 ','가 쓰인 경우 (1. 1,200g ->1200g 2. 1,2KG ->1.2KG 
+  SET vg_goods_nm = CASE WHEN vg_goods_nm REGEXP '(\\D|\\s|^)[0-9],[0-9]{3,}(G|ML)' THEN REGEXP_REPLACE(REGEXP_SUBSTR(vg_goods_nm,'(\\D|\\s|^)[0-9]{1},[0-9]{3,}(G|ML)'),',','')
+  								 WHEN vg_goods_nm REGEXP '(\\D|\\s|^)[0-9],[0-9]{1,2}(G|ML)' THEN REGEXP_REPLACE(REGEXP_SUBSTR(vg_goods_nm,'(\\D|\\s|^)[0-9]{1},[0-9]{3,}(G|ML)'),',','.')
+  								 WHEN vg_goods_nm REGEXP '(\\D|\\s|^)[0-9],[0-9]+(KG|L)' THEN REGEXP_REPLACE(REGEXP_SUBSTR(vg_goods_nm,'(\\D|\\s|^)[0-9],[0-9]+(KG|L)'),',','.')
+  								 ELSE vg_goods_nm
+  								 END;
   -- 하이포스의 경우 용량표기 시 소수점이 누락되는 경우 다수 발생하여 기존 바코드용량정보를 활용, 강제로 수정
   SET vg_goods_nm = CASE WHEN vg_goods_nm REGEXP CONCAT(REPLACE(vx_qty/1000,'.',''),'(L|KG)') THEN REPLACE(vg_goods_nm, REPLACE(vx_qty/1000,'.',''), vx_qty/1000) 
                          WHEN vg_goods_nm LIKE '%.%' AND vg_goods_nm REGEXP CONCAT(vx_qty*10,rg_unit) THEN REPLACE(vg_goods_nm, vx_qty*10, vx_qty)
@@ -127,14 +130,23 @@ BEGIN
 */
   -- 용량&본입수가 중복돼 용량계산이 잘못되는 경우. 예:  칭따오대맥640ml12640ml12
   -- 중복되는 용량&본입수를 삭제. 예: 칭따오대맥640ml12640ml12 --> 칭따오대맥640ml12
-  IF REGEXP_INSTR(vg_goods_nm, CONCAT('[0-9]+[0-9.]*','(ML|L)+','[0-9]{3,}','(ML|L)+','[0-9]{1,2}$'))>0 
-     OR REGEXP_INSTR(vg_goods_nm, CONCAT('[0-9]+[0-9.]*','(KG|G)+','[0-9]{3,}','(KG|G)+','[0-9]{1,2}$'))>0 THEN
-  	 SET @QTY1=''; SET @QTY1=REGEXP_SUBSTR(vg_goods_nm, CONCAT('[0-9]+[0-9.]*','(ML|KG|[GL])+','[0-9]{3,}','(ML|KG|[GL])+','[0-9]{1,2}$'));
+  IF REGEXP_INSTR(vg_goods_nm, CONCAT('[0-9]+[0-9.]*','(ML|L)+','[0-9.]{3,}','(ML|L)+','[0-9]{1,2}$'))>0 
+     OR REGEXP_INSTR(vg_goods_nm, CONCAT('[0-9]+[0-9.]*','(KG|G)+','[0-9.]{3,}','(KG|G)+','[0-9]{1,2}$'))>0 THEN
+  	 SET @QTY1=''; SET @QTY1=REGEXP_SUBSTR(vg_goods_nm, CONCAT('[0-9]+[0-9.]*','(ML|KG|[GL])+','[0-9.]{3,}','(ML|KG|[GL])+','[0-9]{1,2}$'));
   	 SET @S_IDX=''; SET @S_IDX=REGEXP_SUBSTR(@QTY1, CONCAT('[0-9]+[0-9.]*','(ML|KG|[GL])+'));
   	 SET @QTY2=''; SET @QTY2=SUBSTRING_INDEX(@QTY1, @S_IDX, 2);
     SET vg_goods_nm = REPLACE(vg_goods_nm, @QTY1, @QTY2);
   END IF;
-  
+
+  -- 콤마(,)로 인한 용량 오류 
+  -- KG/L 앞의 콤마는 닷(.)으로 변경(예: 돌파인링(대)3,62kg --> 3.62KG), 나머지는 콤마를 삭제(예: 그린자이언트2,120g --> 2120G)
+/*  IF REGEXP_INSTR(vg_goods_nm, CONCAT('[0-9]+[,]+[0-9]+',rg_code1,'+'))>0 THEN
+  	 SET @STR_QTY=''; SET @STR_QTY=REGEXP_SUBSTR(vg_goods_nm, CONCAT('[0-9]+[,]+[0-9]+',rg_code1,'+'));
+    SET @CODE1=''; SET @CODE1=REGEXP_SUBSTR(@STR_QTY,rg_code1);
+  	 SET @QTY2=''; SET @QTY2=CASE WHEN @CODE1 IN('KG','L') THEN REPLACE(@STR_QTY,',','.') ELSE REPLACE(@STR_QTY,',','') END;
+    SET vg_goods_nm = REPLACE(vg_goods_nm, @STR_QTY, @QTY2);
+  END IF;
+*/  
   ## 용량*본입이  공란없이 중복되어, 용량이 과다하게 크게 적힌 경우 (ex: 260g*3260g*3 --> 3260g 으로인식) 표기가 중복된 것으로 간주 해 하나를 삭제 
   IF REGEXP_INSTR(vg_goods_nm, CONCAT(rg_num,rg_unit,rg_code2,rg_num,rg_num,rg_unit,rg_code2,rg_num))>0 THEN   
   	 SET @STR_QTY=''; SET @STR_QTY=REGEXP_SUBSTR(vg_goods_nm, CONCAT(rg_num,rg_unit,rg_code2,rg_num,rg_num,rg_unit,rg_code2,rg_num));
