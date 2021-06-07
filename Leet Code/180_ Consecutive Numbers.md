@@ -56,6 +56,8 @@ SELECT DISTINCT Num AS ConsecutiveNums
 ## \<What I Learned\>
 
 ### LEAD OVER
+[출처: mysqltutorial](https://www.mysqltutorial.org/mysql-window-functions/mysql-lead-function/)  
+
 The `LEAD()` function is a window function that allows you to look forward a number of rows and access data of that row from the current row.  
 _`LEAD()` 함수는 현재 행 다음 N번째 오는 값을 동일한 행에서 보여준다. 비슷하게, `LAG()`함수는 현재 행 이전 N번째 값을 조회._
 ```sql
@@ -86,4 +88,23 @@ _`PARTITION BY` 는 컬럼 내의 값 별로 그룹핑 및 분할하는 역할�
 
 * **ORDER BY clause**  
 The `ORDER BY` clause determines the order of rows in partitions before the `LEAD()` function is applied. 
-_`ORDER BY`는 파티션 내의 정렬을 어떻게 할것인지 기준을 세우며, 그 기준에 따라 LEAD()가 적용된다._
+_`ORDER BY`는 파티션 내의 정렬을 어떻게 할것인지 기준을 세우며, 그 기준에 따라 LEAD()가 적용된다._  
+
+#### MySQL LEAD() function example
+![image](https://user-images.githubusercontent.com/74705142/120962958-ba09e100-c79b-11eb-8f73-aec66c8a4ceb.png)
+
+The following statement finds the order date and the next order date of each customer:  
+```sql
+SELECT 
+    customerName,
+    orderDate,
+    LEAD(orderDate,1) OVER (
+        PARTITION BY customerNumber
+        ORDER BY orderDate ) nextOrderDate
+FROM 
+    orders
+INNER JOIN customers USING (customerNumber);
+```
+Here is the output:  
+
+![image](https://user-images.githubusercontent.com/74705142/120963024-d4dc5580-c79b-11eb-8018-674dfebca15d.png)
