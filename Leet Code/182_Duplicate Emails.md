@@ -21,7 +21,7 @@ having count(Email)>=2
 
 ![image](https://user-images.githubusercontent.com/74705142/120962142-1f5cd280-c79a-11eb-9a4e-b2559857bf9e.png)
 
-## \<Other Solutions\>
+## \<Other' Solutions\>
 
 ### 1. from절 subquery에서 group by사용 
 ```sql
