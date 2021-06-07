@@ -36,7 +36,7 @@ query
 ```
 ![image]
 
-## \<Other Solutions\>
+## \<Other's Solutions\>
 
 ### 1. 내용
 ```sql
