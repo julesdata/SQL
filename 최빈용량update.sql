@@ -13,8 +13,9 @@
 	, CONCAT(unit_qty, unit_nm, '*', pack_qty) QTY, COUNT(DISTINCT store_id) store_cnt, LENGTH(REPLACE(goods_nm,' ','')) goods_len
 	FROM dw_store_barcode_his_test 
 	WHERE unit_qty > 0 
+	# 조건 업데이트
 	AND barcode_no IN (SELECT DISTINCT barcode_no FROM tb_qty_dic_modi WHERE result_yn = 'Y')
-   AND regi_date >= DATE_FORMAT(DATE_ADD('20210609', INTERVAL -90 DAY), '%Y%m%d')
+        AND regi_date >= DATE_FORMAT(DATE_ADD('20210609', INTERVAL -90 DAY), '%Y%m%d')
 	GROUP BY barcode_no, CONCAT(unit_qty, unit_nm, '*', pack_qty)
 	;
 	
@@ -28,19 +29,19 @@
 	, r_type
 	, r_cnt
 	)
-  SELECT *
-  FROM (SELECT barcode_no
+ 	 SELECT *
+  	FROM (SELECT barcode_no
            	 , CASE WHEN goods_nm REGEXP '냉장' AND goods_nm NOT REGEXP '냉장고' THEN '냉장'
                     WHEN goods_nm REGEXP '냉동' THEN '냉동'
                     WHEN goods_nm REGEXP '(상온|실온)' THEN '실온' END r_type
            	 , COUNT(*) r_cnt
-        FROM dw_store_barcode_his_test
-	     where barcode_no IN (SELECT DISTINCT barcode_no FROM tb_qty_dic_modi WHERE result_yn = 'Y')
-	     AND regi_date >= DATE_FORMAT(DATE_ADD('20210609', INTERVAL -90 DAY), '%Y%m%d')
-        GROUP BY barcode_no
-             , CASE WHEN goods_nm REGEXP '냉장' AND goods_nm NOT REGEXP '냉장고' THEN '냉장'
-                    WHEN goods_nm REGEXP '냉동' THEN '냉동'
-                    WHEN goods_nm REGEXP '(상온|실온)' THEN '실온' END) a
+       		FROM dw_store_barcode_his_test
+	     	where barcode_no IN (SELECT DISTINCT barcode_no FROM tb_qty_dic_modi WHERE result_yn = 'Y')
+	     	AND regi_date >= DATE_FORMAT(DATE_ADD('20210609', INTERVAL -90 DAY), '%Y%m%d')
+        	GROUP BY barcode_no
+             		, CASE WHEN goods_nm REGEXP '냉장' AND goods_nm NOT REGEXP '냉장고' THEN '냉장'
+                	       WHEN goods_nm REGEXP '냉동' THEN '냉동'
+                	       WHEN goods_nm REGEXP '(상온|실온)' THEN '실온' END) a
 	WHERE r_type IS NOT NULL
 	;
 	
