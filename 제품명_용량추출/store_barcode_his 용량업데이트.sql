@@ -5,7 +5,7 @@ SET @rg_except='(인분|인용|인치|개월|단계|마리|CM|MM|MG|세(?!트)|[
 SET @rg_pattern= CONCAT('([(]*',@rg_num,'+',@rg_except,'*',@rg_code1,'*',@rg_code2,'*',')+(.*',@rg_num,'+',@rg_except,'*',@rg_code1,'*','[ ]*[x×*+/()\\-_,.&~\\[\\]]*[ ]*)*');   # 숫자,단위,기호패턴 반복
 
 delete from dw_store_barcode_his_summary
-where barcode_no IN( SELECT distinct barcode_no
+where barcode_no IN( SELECT distinct a.barcode_no
                       FROM dw_store_barcode_his_test a, tb_qty_dic b
                       WHERE a.barcode_no = b.barcode_no
                       AND REGEXP_SUBSTR(REGEXP_REPLACE(a.goods_nm, CONCAT(a.barcode_no,'|[\r]'), ''),@rg_pattern) = b.qty_ptn
