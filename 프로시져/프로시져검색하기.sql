@@ -1,0 +1,12 @@
+# 특정 테이블, 컬럼 명 등을 포함하는 프로시져 모두 검색하기
+
+SELECT
+       ROUTINE_SCHEMA
+     , ROUTINE_NAME
+     , ROUTINE_DEFINITION
+     , ROUTINE_TYPE
+ FROM
+       INFORMATION_SCHEMA.ROUTINES
+WHERE
+       ROUTINE_DEFINITION LIKE '%검색할 텍스트%'
+  AND  ROUTINE_TYPE='PROCEDURE';
