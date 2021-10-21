@@ -8,7 +8,7 @@
 ## \<Solving\>
 **Points!**: 
 1.  employee 테이블과 department 테이블 조인
-2.  부서별 salary 순위 구하기 (급여가 같은 사람은 모두 조회되도록 해야하므로, group by 후 Max Salary 불가)
+2.  부서별 salary Rank() OVER 함수로 순위 구하기 (급여가 같은 사람은 모두 조회되도록 해야하므로, group by 후 Max Salary 불가)
   
 ### My Submission
 ```sql
@@ -21,27 +21,43 @@ FROM(
     ) a1
 WHERE Salary_rank = 1
 ```
-![image]
+```
+{"headers": ["Department", "Employee", "Salary"], "values": [["IT", "Jim", 90000], ["IT", "Max", 90000], ["Sales", "Henry", 80000]]}
+```
+![image](https://user-images.githubusercontent.com/74705142/138234714-a11b6826-9217-4f66-b973-7766febf67c1.png)
 
 ## \<Other's Solutions\>
 
 ### 1. 내용
 ```sql
-query
+SELECT 
+    d.name AS 'Department',
+    e.name AS 'Employee',
+    salary
+FROM Employee AS e
+INNER JOIN Department AS d
+ON e.DepartmentId = d.ID
+WHERE 
+    (e.DepartmentId, salary) IN
+    (
+        SELECT DepartmentId, max(salary) 
+        FROM employee 
+        GROUP BY DepartmentId
+    );
 ```
-**Points!**: 해설  
+**Points!**: 부서별 최고 급여 금액을 구해서, 부서 및 급여가 해당 조건과 같은 사원을 검색한다. 
+             IN절 안에 group by, max salary 넣으면 가능.
    
    
 ### 2. 내용
 ```sql
-query
+SELECT Department, Employee, Salary 
+FROM(
+        SELECT b.Name Department, a.Name Employee, a.Salary
+            , max(salary) over(PARTITION BY departmentid) max_salary
+        FROM Employee a, Department b
+        WHERE a.DepartmentId = b.Id
+    ) a1
+WHERE salary=max_salary
 ```
-**Points!**: 해설 
-
-## \<What I Learned\>  
-
-### 1. 
-내용
-  
-### 2.   
-내용
+**Points!**: max() over함수로 최고급여와, 급여가 같은 사원 검색도 가능
